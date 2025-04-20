@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Lab_05_Roman_Qquelcca.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/qquelcca/[controller]")]
 public class EstudianteController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -23,7 +23,7 @@ public class EstudianteController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var estudiantes = await _unitOfWork.Repository<Estudiante>().GetAllAsync();
+        var estudiantes = await _unitOfWork.GetRepository<Estudiante>().GetAllAsync();
         
         // Mapea los estudiantes a EstudianteDto (sin las colecciones vacías)
         var estudianteDtos = estudiantes.Select(est => new EstudianteDto
@@ -43,7 +43,7 @@ public class EstudianteController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var estudiante = await _unitOfWork.Repository<Estudiante>().GetByIdAsync(id);
+        var estudiante = await _unitOfWork.GetRepository<Estudiante>().GetByIdAsync(id);
         if (estudiante == null) return NotFound();
 
         // Mapea el estudiante a EstudianteGetDto (con colecciones si no están vacías)
@@ -76,7 +76,7 @@ public class EstudianteController : ControllerBase
             // Agregar otras propiedades si es necesario
         };
 
-        await _unitOfWork.Repository<Estudiante>().InsertAsync(estudiante);
+        await _unitOfWork.GetRepository<Estudiante>().InsertAsync(estudiante);
         await _unitOfWork.Complete();
 
         // Mapea el estudiante recién creado a EstudianteDto para la respuesta
@@ -104,7 +104,7 @@ public class EstudianteController : ControllerBase
         }
 
         // Obtén el estudiante existente por su ID
-        var existing = await _unitOfWork.Repository<Estudiante>().GetByIdAsync(id);
+        var existing = await _unitOfWork.GetRepository<Estudiante>().GetByIdAsync(id);
         if (existing == null) return NotFound();
 
         // Mapea los campos de EstudianteDto a la entidad Estudiante existente
@@ -117,7 +117,7 @@ public class EstudianteController : ControllerBase
         // Si hay otros campos que deseas actualizar, agrégales aquí.
 
         // Aquí no es necesario acceder directamente al DbContext, el repositorio ya maneja el estado
-        _unitOfWork.Repository<Estudiante>().Update(existing);
+        _unitOfWork.GetRepository<Estudiante>().Update(existing);
 
         // Guardar los cambios en la base de datos
         await _unitOfWork.Complete();
@@ -128,10 +128,10 @@ public class EstudianteController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var estudiante = await _unitOfWork.Repository<Estudiante>().GetByIdAsync(id);
+        var estudiante = await _unitOfWork.GetRepository<Estudiante>().GetByIdAsync(id);
         if (estudiante == null) return NotFound();
 
-        _unitOfWork.Repository<Estudiante>().Delete(estudiante);
+        _unitOfWork.GetRepository<Estudiante>().Delete(estudiante);
         await _unitOfWork.Complete();
 
         return NoContent();

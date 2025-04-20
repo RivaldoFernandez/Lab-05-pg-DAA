@@ -4,6 +4,6 @@ using Lab_05_Roman_Qquelcca.Repository;
 
 public interface IUnitOfWork
 {
-    IGenericRepository<T> Repository<T>() where T : class;
+    IGenericRepository<TEntity> GetRepository<TEntity>() where TEntity : class;
     Task<int> Complete();
 }

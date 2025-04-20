@@ -1,79 +1,42 @@
-// using System.Collections;
-// using Lab_05_Roman_Qquelcca.Models;
-//
-// namespace Lab_05_Roman_Qquelcca.Repository.Unit;
-//
-// public class UnitOfWork : IUnitOfWork
-// {
-//     private readonly TecsupDB _context;
-//     private Hashtable _repositories;
-//
-//     public UnitOfWork(TecsupDB context)
-//     {
-//         _context = context;
-//         _repositories = new Hashtable();
-//     }
-//
-//     // Método para obtener repositorios genéricos
-//     public IGenericRepository<T> Repository<T>() where T : class
-//     {
-//         var type = typeof(T).Name;
-//
-//         if (!_repositories.ContainsKey(type))
-//         {
-//             var repoType = typeof(GenericRepository<>).MakeGenericType(typeof(T));
-//             var repoInstance = Activator.CreateInstance(repoType, _context);
-//             _repositories[type] = repoInstance!;
-//         }
-//
-//         return (IGenericRepository<T>)_repositories[type]!;
-//     }
-//
-//     // Método para guardar cambios asíncronos
-//     public async Task<int> Complete() => await _context.SaveChangesAsync();
-//     public TecsupDB GetContext() => _context;
-// }
-
-
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Collections;
+using Lab_05_Roman_Qquelcca.Models;
+namespace Lab_05_Roman_Qquelcca.Repository.Unit;
+using System.Collections;
 using Lab_05_Roman_Qquelcca.Models;
 
-namespace Lab_05_Roman_Qquelcca.Repository.Unit
+public class UnitOfWork : IUnitOfWork
 {
-    public class UnitOfWork : IUnitOfWork
+    private readonly Hashtable _repositories = new();
+    private readonly TecsupDB _context;
+
+    public UnitOfWork(TecsupDB context)
     {
-        private readonly TecsupDB _context;
-        private Dictionary<string, object> _repositories;
+        _context = context;
+    }
 
-        public UnitOfWork(TecsupDB context)
+    public Task<int> Complete()
+    {
+        return _context.SaveChangesAsync();
+    }
+
+    public IGenericRepository<TEntity> GetRepository<TEntity>() where TEntity : class
+    {
+        var type = typeof(TEntity).Name;
+
+        if (_repositories.ContainsKey(type))
         {
-            _context = context;
-            _repositories = new Dictionary<string, object>();
+            return (IGenericRepository<TEntity>)_repositories[type]!;
         }
 
-        // Método para obtener repositorios genéricos
-        public IGenericRepository<T> Repository<T>() where T : class
+        var repositoryType = typeof(GenericRepository<>);
+        var repositoryInstance = Activator.CreateInstance(repositoryType.MakeGenericType(typeof(TEntity)), _context);
+
+        if (repositoryInstance is IGenericRepository<TEntity> repo)
         {
-            var type = typeof(T).Name;
-
-            // Verifica si el repositorio ya está en el diccionario
-            if (!_repositories.ContainsKey(type))
-            {
-                // Si no está, crea una nueva instancia del repositorio genérico para la entidad
-                var repoType = typeof(GenericRepository<>).MakeGenericType(typeof(T));
-                var repoInstance = Activator.CreateInstance(repoType, _context);
-                _repositories[type] = repoInstance!;
-            }
-
-            return (IGenericRepository<T>)_repositories[type]!;
+            _repositories.Add(type, repo);
+            return repo;
         }
 
-        // Método para guardar cambios asíncronos
-        public async Task<int> Complete() => await _context.SaveChangesAsync();
-
-        // Método para obtener el contexto (DbContext)
-        public TecsupDB GetContext() => _context;
+        throw new Exception($"No se pudo crear la instancia del repositorio para el tipo {type}");
     }
 }
