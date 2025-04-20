@@ -4,7 +4,6 @@ using Lab_05_Roman_Qquelcca.Repository.Unit;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using AutoMapper;
-using Lab_05_Roman_Qquelcca.Profiles; // Asegúrate de tener este namespace
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,8 +19,6 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<TecsupDB>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// AutoMapper
-builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
 // Inyección de dependencias
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));

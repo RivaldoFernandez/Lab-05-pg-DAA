@@ -1,4 +1,5 @@
-using AutoMapper;
+
+
 using Lab_05_Roman_Qquelcca.DTOs;
 using Lab_05_Roman_Qquelcca.Models;
 using Lab_05_Roman_Qquelcca.Repository.Unit;
@@ -6,48 +7,45 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Lab_05_Roman_Qquelcca.Controllers;
 
+
 [ApiController]
 [Route("api/qquelcca/[controller]")]
 public class EstudianteController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
 
-    public EstudianteController(IUnitOfWork unitOfWork, IMapper mapper)
+    public EstudianteController(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
-        _mapper = mapper;
     }
-
-    // GET: api/Estudiante
+    
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
         var estudiantes = await _unitOfWork.GetRepository<Estudiante>().GetAllAsync();
-        
-        // Mapea los estudiantes a EstudianteDto (sin las colecciones vacías)
-        var estudianteDtos = estudiantes.Select(est => new EstudianteDto
+
+        var estudiantesDto = estudiantes.Select(e => new EstudianteGetDto()
         {
-            IdEstudiante = est.IdEstudiante,
-            Nombre = est.Nombre,
-            Edad = est.Edad,
-            Direccion = est.Direccion,
-            Telefono = est.Telefono,
-            Correo = est.Correo
+            IdEstudiante = e.IdEstudiante,
+            Nombre = e.Nombre,
+            Edad = e.Edad,
+            Direccion = e.Direccion,
+            Telefono = e.Telefono,
+            Correo = e.Correo
         });
 
-        return Ok(estudianteDtos);
+        return Ok(estudiantesDto);
     }
 
-    // GET: api/Estudiante/5
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
         var estudiante = await _unitOfWork.GetRepository<Estudiante>().GetByIdAsync(id);
-        if (estudiante == null) return NotFound();
+        if (estudiante == null)
+            return NotFound();
 
-        // Mapea el estudiante a EstudianteGetDto (con colecciones si no están vacías)
-        var estudianteGetDto = new EstudianteGetDto
+        var estudianteDto = new EstudianteGetDto
         {
             IdEstudiante = estudiante.IdEstudiante,
             Nombre = estudiante.Nombre,
@@ -55,32 +53,28 @@ public class EstudianteController : ControllerBase
             Direccion = estudiante.Direccion,
             Telefono = estudiante.Telefono,
             Correo = estudiante.Correo
-            // Agregar otras propiedades si es necesario
         };
 
-        return Ok(estudianteGetDto);
+        return Ok(estudianteDto);
     }
 
-    // POST: api/Estudiante
+
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] EstudianteDto estudianteCreateDto)
+    public async Task<IActionResult> Create([FromBody] EstudianteDto estudianteDto)
     {
-        // Mapea el EstudianteDto a Estudiante
         var estudiante = new Estudiante
         {
-            Nombre = estudianteCreateDto.Nombre,
-            Edad = estudianteCreateDto.Edad,
-            Direccion = estudianteCreateDto.Direccion,
-            Telefono = estudianteCreateDto.Telefono,
-            Correo = estudianteCreateDto.Correo
-            // Agregar otras propiedades si es necesario
+            Nombre = estudianteDto.Nombre,
+            Edad = estudianteDto.Edad,
+            Direccion = estudianteDto.Direccion,
+            Telefono = estudianteDto.Telefono,
+            Correo = estudianteDto.Correo
         };
 
         await _unitOfWork.GetRepository<Estudiante>().InsertAsync(estudiante);
         await _unitOfWork.Complete();
 
-        // Mapea el estudiante recién creado a EstudianteDto para la respuesta
-        var estudianteDto = new EstudianteDto
+        return CreatedAtAction(nameof(GetById), new { id = estudiante.IdEstudiante }, new EstudianteGetDto
         {
             IdEstudiante = estudiante.IdEstudiante,
             Nombre = estudiante.Nombre,
@@ -88,48 +82,36 @@ public class EstudianteController : ControllerBase
             Direccion = estudiante.Direccion,
             Telefono = estudiante.Telefono,
             Correo = estudiante.Correo
-            // Agregar otras propiedades si es necesario
-        };
-
-        return CreatedAtAction(nameof(GetById), new { id = estudiante.IdEstudiante }, estudianteDto);
+        });
     }
-    
+
+
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] EstudianteDto estudianteUpdateDto)
+    public async Task<IActionResult> Update(int id, [FromBody] EstudianteDto estudianteDto)
     {
-        // Verifica que el modelo sea válido
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
-        // Obtén el estudiante existente por su ID
         var existing = await _unitOfWork.GetRepository<Estudiante>().GetByIdAsync(id);
-        if (existing == null) return NotFound();
+        if (existing == null)
+            return NotFound();
 
-        // Mapea los campos de EstudianteDto a la entidad Estudiante existente
-        existing.Nombre = estudianteUpdateDto.Nombre;
-        existing.Edad = estudianteUpdateDto.Edad;
-        existing.Direccion = estudianteUpdateDto.Direccion;
-        existing.Telefono = estudianteUpdateDto.Telefono;
-        existing.Correo = estudianteUpdateDto.Correo;
+        existing.Nombre = estudianteDto.Nombre;
+        existing.Edad = estudianteDto.Edad;
+        existing.Direccion = estudianteDto.Direccion;
+        existing.Telefono = estudianteDto.Telefono;
+        existing.Correo = estudianteDto.Correo;
 
-        // Si hay otros campos que deseas actualizar, agrégales aquí.
-
-        // Aquí no es necesario acceder directamente al DbContext, el repositorio ya maneja el estado
         _unitOfWork.GetRepository<Estudiante>().Update(existing);
-
-        // Guardar los cambios en la base de datos
         await _unitOfWork.Complete();
 
         return NoContent();
     }
+
     
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         var estudiante = await _unitOfWork.GetRepository<Estudiante>().GetByIdAsync(id);
-        if (estudiante == null) return NotFound();
+        if (estudiante == null)
+            return NotFound();
 
         _unitOfWork.GetRepository<Estudiante>().Delete(estudiante);
         await _unitOfWork.Complete();
